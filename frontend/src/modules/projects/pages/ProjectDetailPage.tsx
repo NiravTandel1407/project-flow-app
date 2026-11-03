@@ -2,26 +2,30 @@ import React, { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useProject, useDeleteProject } from '../hooks';
 import { useProjectProgress } from '@/modules/tasks/hooks';
+import { useProjectDocuments } from '@/modules/documents/hooks';
 import { PageContainer } from '@/shared/components/layout/PageContainer';
 import { TaskList } from './components/TaskList';
+import { ProjectDocuments } from '@/modules/documents/components/ProjectDocuments';
 import { ProjectFormModal } from './components/ProjectFormModal';
 import { TaskFormModal } from '@/modules/tasks/components/TaskFormModal';
-import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, CheckSquare, FileText } from 'lucide-react';
 
 export const ProjectDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const projectId = Number(id);
   const navigate = useNavigate();
 
+  const [activeTab, setActiveTab] = useState<'tasks' | 'documents'>('tasks');
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isCreateTaskModalOpen, setIsCreateTaskModalOpen] = useState(false);
 
   const { data: project, isLoading } = useProject(projectId);
   const { data: progress } = useProjectProgress(projectId);
+  const { data: documents = [] } = useProjectDocuments(projectId);
   const deleteMutation = useDeleteProject();
 
   const handleDelete = async () => {
-    if (window.confirm('Are you sure you want to delete this project and all its tasks?')) {
+    if (window.confirm('Are you sure you want to delete this project and all its tasks and documents?')) {
       await deleteMutation.mutateAsync(projectId);
       navigate('/projects');
     }
@@ -214,15 +218,50 @@ export const ProjectDetailPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Tasks Section with Filter Pills and Task List */}
-        <div className="mt-2">
-          <TaskList
-            projectId={projectId}
-            projectName={project.name}
-            isCreateModalOpen={isCreateTaskModalOpen}
-            onCloseCreateModal={() => setIsCreateTaskModalOpen(false)}
-          />
+        {/* Tabs: Tasks / Documents */}
+        <div className="flex items-center gap-8 border-b border-[#E4E6EF] mt-2">
+          <button
+            type="button"
+            onClick={() => setActiveTab('tasks')}
+            className={`pb-3 text-[15px] font-semibold flex items-center gap-2 border-b-2 transition-all cursor-pointer ${
+              activeTab === 'tasks'
+                ? 'border-[#3B5BFF] text-[#3B5BFF]'
+                : 'border-transparent text-[#5B6275] hover:text-[#14162B]'
+            }`}
+          >
+            <CheckSquare className="w-4 h-4" />
+            Tasks ({totalTasks})
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('documents')}
+            className={`pb-3 text-[15px] font-semibold flex items-center gap-2 border-b-2 transition-all cursor-pointer ${
+              activeTab === 'documents'
+                ? 'border-[#3B5BFF] text-[#3B5BFF]'
+                : 'border-transparent text-[#5B6275] hover:text-[#14162B]'
+            }`}
+          >
+            <FileText className="w-4 h-4" />
+            Documents ({documents.length})
+          </button>
         </div>
+
+        {/* Tab Content */}
+        {activeTab === 'tasks' ? (
+          <div>
+            <TaskList
+              projectId={projectId}
+              projectName={project.name}
+              isCreateModalOpen={isCreateTaskModalOpen}
+              onCloseCreateModal={() => setIsCreateTaskModalOpen(false)}
+            />
+          </div>
+        ) : (
+          <div>
+            <ProjectDocuments projectId={projectId} />
+          </div>
+        )}
       </div>
 
       {/* Edit Project Modal */}
