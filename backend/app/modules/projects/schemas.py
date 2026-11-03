@@ -2,7 +2,7 @@ from datetime import date, datetime
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-from app.modules.project.models import Priority, ProjectStatus
+from app.modules.projects.models import Priority, ProjectStatus
 
 
 class ProjectBase(BaseModel):

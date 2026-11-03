@@ -14,14 +14,17 @@ export const useToggleSubtask = (taskId?: number) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, is_completed }: { id: number; is_completed: boolean }) =>
-      subtasksApi.toggleSubtask(id, is_completed),
+    mutationFn: ({ id, is_done, is_completed }: { id: number; is_done?: boolean; is_completed?: boolean }) => {
+      const finalDone = is_done !== undefined ? is_done : !!is_completed;
+      return subtasksApi.toggleSubtask(id, finalDone);
+    },
     onSuccess: () => {
       if (taskId) {
         queryClient.invalidateQueries({ queryKey: ['subtasks', taskId] });
       }
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       queryClient.invalidateQueries({ queryKey: ['projects'] });
+      queryClient.invalidateQueries({ queryKey: ['project-progress'] });
     },
   });
 };
@@ -30,10 +33,12 @@ export const useCreateSubtask = (taskId: number) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (payload: SubtaskCreate) => subtasksApi.createSubtask(payload),
+    mutationFn: (payload: SubtaskCreate) => subtasksApi.createSubtask(taskId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['subtasks', taskId] });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      queryClient.invalidateQueries({ queryKey: ['project-progress'] });
     },
   });
 };
@@ -46,7 +51,8 @@ export const useDeleteSubtask = (taskId: number) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['subtasks', taskId] });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      queryClient.invalidateQueries({ queryKey: ['project-progress'] });
     },
   });
 };
-

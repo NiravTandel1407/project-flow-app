@@ -7,9 +7,9 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.modules.auth.deps import get_current_user
 from app.modules.auth.models import User
-from app.modules.project import services
-from app.modules.project.models import Priority, ProjectStatus
-from app.modules.project.schemas import (
+from app.modules.projects import services
+from app.modules.projects.models import Priority, ProjectStatus
+from app.modules.projects.schemas import (
     ProjectCreate,
     ProjectList,
     ProjectOut,

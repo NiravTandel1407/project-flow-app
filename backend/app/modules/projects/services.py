@@ -3,9 +3,9 @@
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.modules.project.models import Priority, Project, ProjectStatus
-from app.modules.project.schemas import ProjectCreate, ProjectUpdate
-from app.modules.project.exceptions import InvalidDateRangeError, ProjectNotFoundError
+from app.modules.projects.models import Priority, Project, ProjectStatus
+from app.modules.projects.schemas import ProjectCreate, ProjectUpdate
+from app.modules.projects.exceptions import InvalidDateRangeError, ProjectNotFoundError
 
 def create_project(db: Session, user_id: int, data: ProjectCreate) -> Project:
     project = Project(**data.model_dump(), user_id=user_id)
