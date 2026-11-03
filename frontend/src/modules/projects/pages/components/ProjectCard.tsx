@@ -3,13 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { Project } from '../../types';
 import { ProgressBar } from '@/shared/components/ui/ProgressBar';
 import { Badge } from '@/shared/components/ui/Badge';
-import { Calendar, CheckCircle2, ChevronRight, Flag } from 'lucide-react';
+import { Calendar, CheckCircle2, ChevronRight, Flag, Edit3 } from 'lucide-react';
 
 interface ProjectCardProps {
   project: Project;
+  onEdit?: (project: Project) => void;
 }
 
-export const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => {
+export const ProjectCard: React.FC<ProjectCardProps> = ({ project, onEdit }) => {
   const navigate = useNavigate();
 
   const statusVariantMap: Record<string, 'default' | 'info' | 'success' | 'warning' | 'danger'> = {
@@ -70,8 +71,23 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => {
             )}
           </div>
 
-          <div className="text-[#98A2B3] group-hover:text-[#3B5BFF] transition-colors">
-            <ChevronRight className="w-4 h-4" />
+          <div className="flex items-center gap-1 text-[#98A2B3]">
+            {onEdit && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit(project);
+                }}
+                className="p-1 rounded-lg hover:bg-slate-100 hover:text-[#3B5BFF] transition-colors"
+                title="Edit project"
+              >
+                <Edit3 className="w-3.5 h-3.5" />
+              </button>
+            )}
+            <div className="group-hover:text-[#3B5BFF] transition-colors">
+              <ChevronRight className="w-4 h-4" />
+            </div>
           </div>
         </div>
 
