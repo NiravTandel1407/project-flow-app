@@ -1,11 +1,17 @@
 import apiClient from '@/core/api/client';
-import { Project, ProjectCreate, ProjectUpdate } from './types';
-import { Status } from '@/core/types/common';
+import { Project, ProjectCreate, ProjectUpdate, ProjectStatus, ProjectPriority } from './types';
 
 export const projectsApi = {
-  getProjects: async (params?: { status?: Status; search?: string }): Promise<Project[]> => {
-    const response = await apiClient.get<Project[]>('/projects', { params });
-    return response.data;
+  getProjects: async (params?: {
+    status?: ProjectStatus | string;
+    priority?: ProjectPriority | string;
+    search?: string;
+  }): Promise<Project[]> => {
+    const response = await apiClient.get<Project[] | { items: Project[]; total: number }>('/projects', { params });
+    if (response.data && typeof response.data === 'object' && 'items' in response.data && Array.isArray(response.data.items)) {
+      return response.data.items;
+    }
+    return Array.isArray(response.data) ? response.data : [];
   },
 
   getProjectById: async (id: number): Promise<Project> => {
@@ -27,4 +33,3 @@ export const projectsApi = {
     await apiClient.delete(`/projects/${id}`);
   },
 };
-

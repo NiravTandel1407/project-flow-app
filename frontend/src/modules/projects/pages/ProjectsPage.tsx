@@ -1,23 +1,23 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useProjects } from '../hooks';
 import { PageContainer } from '@/shared/components/layout/PageContainer';
 import { ProjectCard } from './components/ProjectCard';
 import { StatusFilterBar } from './components/StatusFilterBar';
-import { ProjectFormModal } from './components/ProjectFormModal';
 import { Button } from '@/shared/components/ui/Button';
 import { Plus, Search, FolderKanban } from 'lucide-react';
-import { Status } from '@/core/types/common';
+import { ProjectStatus } from '../types';
 import { useDebounce } from '@/core/hooks/useDebounce';
 
 export const ProjectsPage: React.FC = () => {
-  const [status, setStatus] = useState<Status | 'ALL'>('ALL');
+  const navigate = useNavigate();
+  const [status, setStatus] = useState<ProjectStatus | 'ALL'>('ALL');
   const [search, setSearch] = useState('');
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const debouncedSearch = useDebounce(search, 300);
 
   const { data: projects = [], isLoading } = useProjects({
-    status: status === 'ALL' ? undefined : status,
+    status: status === 'ALL' ? undefined : (status as any),
     search: debouncedSearch || undefined,
   });
 
@@ -26,7 +26,7 @@ export const ProjectsPage: React.FC = () => {
       title="Projects"
       subtitle="Organize, track progress, and manage your team's initiatives."
       actions={
-        <Button onClick={() => setIsModalOpen(true)}>
+        <Button onClick={() => navigate('/projects/new')}>
           <Plus className="w-4 h-4 mr-2" />
           New Project
         </Button>
@@ -63,7 +63,7 @@ export const ProjectsPage: React.FC = () => {
             <p className="text-xs text-slate-500 mt-1 max-w-sm">
               Get started by creating your first project to organize tasks and timelines.
             </p>
-            <Button className="mt-4" onClick={() => setIsModalOpen(true)}>
+            <Button className="mt-4" onClick={() => navigate('/projects/new')}>
               <Plus className="w-4 h-4 mr-2" />
               Create Project
             </Button>
@@ -76,14 +76,8 @@ export const ProjectsPage: React.FC = () => {
           </div>
         )}
       </div>
-
-      <ProjectFormModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-      />
     </PageContainer>
   );
 };
 
 export default ProjectsPage;
-

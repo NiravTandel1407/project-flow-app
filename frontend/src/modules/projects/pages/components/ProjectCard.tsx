@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Project } from '../../types';
 import { ProgressBar } from '@/shared/components/ui/ProgressBar';
 import { Badge } from '@/shared/components/ui/Badge';
-import { Calendar, CheckCircle2, ChevronRight } from 'lucide-react';
+import { Calendar, CheckCircle2, ChevronRight, Flag } from 'lucide-react';
 
 interface ProjectCardProps {
   project: Project;
@@ -13,10 +13,35 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => {
   const navigate = useNavigate();
 
   const statusVariantMap: Record<string, 'default' | 'info' | 'success' | 'warning' | 'danger'> = {
+    not_started: 'default',
+    in_progress: 'info',
+    on_hold: 'warning',
+    completed: 'success',
     TODO: 'default',
     IN_PROGRESS: 'info',
     COMPLETED: 'success',
     BLOCKED: 'danger',
+  };
+
+  const statusLabelMap: Record<string, string> = {
+    not_started: 'Not started',
+    in_progress: 'In progress',
+    on_hold: 'On hold',
+    completed: 'Completed',
+    TODO: 'Not started',
+    IN_PROGRESS: 'In progress',
+    COMPLETED: 'Completed',
+    BLOCKED: 'On hold',
+  };
+
+  const priorityColorMap: Record<string, string> = {
+    high: 'text-rose-600 bg-rose-50 border-rose-200',
+    medium: 'text-amber-600 bg-amber-50 border-amber-200',
+    low: 'text-slate-600 bg-slate-50 border-slate-200',
+    HIGH: 'text-rose-600 bg-rose-50 border-rose-200',
+    MEDIUM: 'text-amber-600 bg-amber-50 border-amber-200',
+    LOW: 'text-slate-600 bg-slate-50 border-slate-200',
+    URGENT: 'text-red-700 bg-red-100 border-red-300',
   };
 
   const progress = project.progress ?? 0;
@@ -27,10 +52,24 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => {
       className="group flex flex-col justify-between rounded-2xl border border-[#E4E7EC] bg-white p-6 shadow-sm hover:border-[#9DB0FF] hover:shadow-md transition-all cursor-pointer"
     >
       <div>
-        <div className="flex items-start justify-between gap-3 mb-3">
-          <Badge variant={statusVariantMap[project.status] || 'default'}>
-            {project.status.replace('_', ' ')}
-          </Badge>
+        <div className="flex items-start justify-between gap-2 mb-3">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Badge variant={statusVariantMap[project.status] || 'default'}>
+              {statusLabelMap[project.status] || project.status.replace('_', ' ')}
+            </Badge>
+
+            {project.priority && (
+              <span
+                className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full border ${
+                  priorityColorMap[project.priority] || 'text-slate-600 bg-slate-50 border-slate-200'
+                }`}
+              >
+                <Flag className="w-2.5 h-2.5" />
+                <span className="capitalize">{project.priority.toLowerCase()}</span>
+              </span>
+            )}
+          </div>
+
           <div className="text-[#98A2B3] group-hover:text-[#3B5BFF] transition-colors">
             <ChevronRight className="w-4 h-4" />
           </div>
@@ -59,7 +98,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => {
           </div>
 
           {project.due_date && (
-            <div className="flex items-center gap-1.5 text-[#667085]">
+            <div className="flex items-center gap-1.5 text-[#667085]" title="Due date">
               <Calendar className="w-3.5 h-3.5" />
               <span>{new Date(project.due_date).toLocaleDateString()}</span>
             </div>

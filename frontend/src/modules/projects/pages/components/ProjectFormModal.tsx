@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Project, ProjectCreate, ProjectUpdate } from '../../types';
+import { Project, ProjectCreate, ProjectUpdate, ProjectStatus, ProjectPriority } from '../../types';
 import { useCreateProject, useUpdateProject } from '../../hooks';
 import { Modal } from '@/shared/components/ui/Modal';
-import { Input } from '@/shared/components/ui/Input';
-import { Button } from '@/shared/components/ui/Button';
-import { Status } from '@/core/types/common';
+import { Loader2 } from 'lucide-react';
 
 interface ProjectFormModalProps {
   isOpen: boolean;
@@ -19,8 +17,11 @@ export const ProjectFormModal: React.FC<ProjectFormModalProps> = ({
 }) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [status, setStatus] = useState<Status>('TODO');
+  const [status, setStatus] = useState<ProjectStatus>('not_started');
+  const [priority, setPriority] = useState<ProjectPriority>('medium');
+  const [startDate, setStartDate] = useState('');
   const [dueDate, setDueDate] = useState('');
+  const [error, setError] = useState<string | null>(null);
 
   const createMutation = useCreateProject();
   const updateMutation = useUpdateProject();
@@ -30,104 +31,213 @@ export const ProjectFormModal: React.FC<ProjectFormModalProps> = ({
       setName(projectToEdit.name);
       setDescription(projectToEdit.description || '');
       setStatus(projectToEdit.status);
+      setPriority(projectToEdit.priority || 'medium');
+      setStartDate(projectToEdit.start_date ? projectToEdit.start_date.split('T')[0] : '');
       setDueDate(projectToEdit.due_date ? projectToEdit.due_date.split('T')[0] : '');
     } else {
       setName('');
       setDescription('');
-      setStatus('TODO');
+      setStatus('not_started');
+      setPriority('medium');
+      setStartDate('');
       setDueDate('');
     }
+    setError(null);
   }, [projectToEdit, isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return;
+    setError(null);
 
-    if (projectToEdit) {
-      const payload: ProjectUpdate = {
-        name: name.trim(),
-        description: description.trim() || undefined,
-        status,
-        due_date: dueDate || undefined,
-      };
-      await updateMutation.mutateAsync({ id: projectToEdit.id, payload });
-    } else {
-      const payload: ProjectCreate = {
-        name: name.trim(),
-        description: description.trim() || undefined,
-        status,
-        due_date: dueDate || undefined,
-      };
-      await createMutation.mutateAsync(payload);
+    if (!name.trim()) {
+      setError('Project name is required');
+      return;
     }
 
-    onClose();
+    if (startDate && dueDate && dueDate < startDate) {
+      setError('Due date must be on or after the start date.');
+      return;
+    }
+
+    try {
+      if (projectToEdit) {
+        const payload: ProjectUpdate = {
+          name: name.trim(),
+          description: description.trim() || undefined,
+          status,
+          priority,
+          start_date: startDate || undefined,
+          due_date: dueDate || undefined,
+        };
+        await updateMutation.mutateAsync({ id: projectToEdit.id, payload });
+      } else {
+        const payload: ProjectCreate = {
+          name: name.trim(),
+          description: description.trim() || undefined,
+          status,
+          priority,
+          start_date: startDate || undefined,
+          due_date: dueDate || undefined,
+        };
+        await createMutation.mutateAsync(payload);
+      }
+      onClose();
+    } catch (err: any) {
+      const detail = err.response?.data?.detail;
+      setError(
+        typeof detail === 'string'
+          ? detail
+          : Array.isArray(detail)
+          ? detail.map((d: any) => d.msg).join(', ')
+          : 'Failed to save project. Please try again.'
+      );
+    }
   };
+
+  const isSubmitting = createMutation.isPending || updateMutation.isPending;
 
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={projectToEdit ? 'Edit Project' : 'Create New Project'}
+      title={projectToEdit ? 'Edit project' : 'Create a new project'}
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <Input
-          label="Project Name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="e.g., Mobile App Redesign"
-          required
-        />
+      <form onSubmit={handleSubmit} className="flex flex-col gap-[18px]">
+        {error && (
+          <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-medium text-red-700">
+            {error}
+          </div>
+        )}
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">
-            Description
+          <label
+            htmlFor="modal-name"
+            className="block mb-[7px] text-[13px] font-semibold text-[#14162B]"
+          >
+            Project name <span className="text-[#B42318]">*</span>
           </label>
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            rows={3}
-            placeholder="High-level project scope and goals..."
-            className="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 hover:border-slate-400 transition-colors"
+          <input
+            id="modal-name"
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="e.g. Website redesign"
+            required
+            className="w-full box-border h-[44px] px-[14px] border border-[#CDD1E0] rounded-[10px] bg-white font-normal text-[15px] text-[#14162B] placeholder-[#6B7185] focus:border-[#3B5BFF] focus:shadow-[0_0_0_3px_#E0E3FF] focus:outline-none transition-all"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">
-            Status
-          </label>
-          <select
-            value={status}
-            onChange={(e) => setStatus(e.target.value as Status)}
-            className="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          <label
+            htmlFor="modal-desc"
+            className="block mb-[7px] text-[13px] font-semibold text-[#14162B]"
           >
-            <option value="TODO">To Do</option>
-            <option value="IN_PROGRESS">In Progress</option>
-            <option value="COMPLETED">Completed</option>
-            <option value="BLOCKED">Blocked</option>
-          </select>
+            Description
+          </label>
+          <textarea
+            id="modal-desc"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="What is this project about? (optional)"
+            className="w-full box-border h-[100px] p-[12px_14px] border border-[#CDD1E0] rounded-[10px] bg-white font-normal text-[15px] text-[#14162B] placeholder-[#6B7185] resize-none focus:border-[#3B5BFF] focus:shadow-[0_0_0_3px_#E0E3FF] focus:outline-none transition-all"
+          />
         </div>
 
-        <Input
-          label="Target Due Date"
-          type="date"
-          value={dueDate}
-          onChange={(e) => setDueDate(e.target.value)}
-        />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label
+              htmlFor="modal-status"
+              className="block mb-[7px] text-[13px] font-semibold text-[#14162B]"
+            >
+              Status
+            </label>
+            <select
+              id="modal-status"
+              value={status}
+              onChange={(e) => setStatus(e.target.value as ProjectStatus)}
+              className="w-full box-border h-[44px] px-[14px] border border-[#CDD1E0] rounded-[10px] bg-white font-normal text-[15px] text-[#14162B] focus:border-[#3B5BFF] focus:shadow-[0_0_0_3px_#E0E3FF] focus:outline-none transition-all cursor-pointer"
+            >
+              <option value="not_started">Not started</option>
+              <option value="in_progress">In progress</option>
+              <option value="on_hold">On hold</option>
+              <option value="completed">Completed</option>
+            </select>
+          </div>
+          <div>
+            <label
+              htmlFor="modal-prio"
+              className="block mb-[7px] text-[13px] font-semibold text-[#14162B]"
+            >
+              Priority
+            </label>
+            <select
+              id="modal-prio"
+              value={priority}
+              onChange={(e) => setPriority(e.target.value as ProjectPriority)}
+              className="w-full box-border h-[44px] px-[14px] border border-[#CDD1E0] rounded-[10px] bg-white font-normal text-[15px] text-[#14162B] focus:border-[#3B5BFF] focus:shadow-[0_0_0_3px_#E0E3FF] focus:outline-none transition-all cursor-pointer"
+            >
+              <option value="medium">Medium</option>
+              <option value="low">Low</option>
+              <option value="high">High</option>
+            </select>
+          </div>
+        </div>
 
-        <div className="flex items-center justify-end gap-3 pt-3">
-          <Button variant="ghost" type="button" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            isLoading={createMutation.isPending || updateMutation.isPending}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label
+              htmlFor="modal-start"
+              className="block mb-[7px] text-[13px] font-semibold text-[#14162B]"
+            >
+              Start date
+            </label>
+            <input
+              id="modal-start"
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="w-full box-border h-[44px] px-[14px] border border-[#CDD1E0] rounded-[10px] bg-white font-normal text-[15px] text-[#14162B] placeholder-[#6B7185] focus:border-[#3B5BFF] focus:shadow-[0_0_0_3px_#E0E3FF] focus:outline-none transition-all"
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="modal-due"
+              className="block mb-[7px] text-[13px] font-semibold text-[#14162B]"
+            >
+              Due date
+            </label>
+            <input
+              id="modal-due"
+              type="date"
+              value={dueDate}
+              min={startDate || undefined}
+              onChange={(e) => setDueDate(e.target.value)}
+              className="w-full box-border h-[44px] px-[14px] border border-[#CDD1E0] rounded-[10px] bg-white font-normal text-[15px] text-[#14162B] placeholder-[#6B7185] focus:border-[#3B5BFF] focus:shadow-[0_0_0_3px_#E0E3FF] focus:outline-none transition-all"
+            />
+            <div className="mt-1.5 text-[11px] text-[#5B6275]">
+              Must be on or after start date.
+            </div>
+          </div>
+        </div>
+
+        <div className="flex justify-end items-center gap-3 pt-4 border-t border-[#E4E6EF]">
+          <button
+            type="button"
+            onClick={onClose}
+            className="h-[44px] px-[20px] border border-[#CDD1E0] rounded-[10px] bg-white font-semibold text-[14px] text-[#3C4157] hover:bg-[#F5F6FA] transition-colors cursor-pointer"
           >
-            {projectToEdit ? 'Save Changes' : 'Create Project'}
-          </Button>
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="h-[44px] px-[22px] border-0 rounded-[10px] bg-[#3B5BFF] hover:bg-[#2A48E6] font-semibold text-[14px] text-white transition-colors cursor-pointer flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed shadow-sm"
+          >
+            {isSubmitting && <Loader2 className="w-4 h-4 animate-spin text-white" />}
+            {projectToEdit ? 'Save changes' : 'Create project'}
+          </button>
         </div>
       </form>
     </Modal>
   );
 };
-

@@ -5,6 +5,7 @@ import { LoginPage } from '@/modules/auth/pages/LoginPage';
 import { RegisterPage } from '@/modules/auth/pages/RegisterPage';
 import { DashboardPage } from '@/modules/dashboard/pages/DashboardPage';
 import { ProjectsPage } from '@/modules/projects/pages/ProjectsPage';
+import { CreateProjectPage } from '@/modules/projects/pages/CreateProjectPage';
 import { ProjectDetailPage } from '@/modules/projects/pages/ProjectDetailPage';
 import { TasksPage } from '@/modules/tasks/pages/TasksPage';
 
@@ -20,6 +21,7 @@ export const App: React.FC = () => {
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/projects" element={<ProjectsPage />} />
+        <Route path="/projects/new" element={<CreateProjectPage />} />
         <Route path="/projects/:id" element={<ProjectDetailPage />} />
         <Route path="/tasks" element={<TasksPage />} />
       </Route>
@@ -31,4 +33,3 @@ export const App: React.FC = () => {
 };
 
 export default App;
-
