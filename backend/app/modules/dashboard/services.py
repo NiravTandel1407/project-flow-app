@@ -118,3 +118,4 @@ def get_dashboard_summary(db: Session, user_id: int) -> DashboardSummary:
         total_tasks_completed=total_completed,
         total_tasks_pending=total_pending,
     )
+

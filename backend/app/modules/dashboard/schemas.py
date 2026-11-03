@@ -21,3 +21,4 @@ class DashboardSummary(BaseModel):
     total_projects: int
     total_tasks_completed: int
     total_tasks_pending: int
+

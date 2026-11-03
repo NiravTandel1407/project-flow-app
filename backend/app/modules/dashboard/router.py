@@ -16,3 +16,4 @@ def get_dashboard_summary(
     user: User = Depends(get_current_user),
 ):
     return services.get_dashboard_summary(db, user.id)
+
