@@ -1,21 +1,21 @@
 import React from 'react';
-import { Status } from '@/core/types/common';
+import { ProjectStatus } from '../../types';
 
 interface StatusFilterBarProps {
-  currentStatus: Status | 'ALL';
-  onChange: (status: Status | 'ALL') => void;
+  currentStatus: ProjectStatus | 'ALL';
+  onChange: (status: ProjectStatus | 'ALL') => void;
 }
 
 export const StatusFilterBar: React.FC<StatusFilterBarProps> = ({
   currentStatus,
   onChange,
 }) => {
-  const options: { label: string; value: Status | 'ALL' }[] = [
+  const options: { label: string; value: ProjectStatus | 'ALL' }[] = [
     { label: 'All Projects', value: 'ALL' },
-    { label: 'To Do', value: 'TODO' },
-    { label: 'In Progress', value: 'IN_PROGRESS' },
-    { label: 'Completed', value: 'COMPLETED' },
-    { label: 'Blocked', value: 'BLOCKED' },
+    { label: 'Not started', value: 'not_started' },
+    { label: 'In progress', value: 'in_progress' },
+    { label: 'On hold', value: 'on_hold' },
+    { label: 'Completed', value: 'completed' },
   ];
 
   return (
@@ -26,7 +26,7 @@ export const StatusFilterBar: React.FC<StatusFilterBarProps> = ({
           <button
             key={opt.value}
             onClick={() => onChange(opt.value)}
-            className={`rounded-xl px-4 py-2 text-xs font-bold whitespace-nowrap transition-all ${
+            className={`rounded-xl px-4 py-2 text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
               isActive
                 ? 'bg-[#101828] text-white shadow-sm'
                 : 'bg-white text-[#475467] border border-[#D0D5DD] hover:bg-slate-50'

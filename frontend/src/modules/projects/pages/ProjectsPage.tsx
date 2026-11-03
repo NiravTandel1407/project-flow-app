@@ -6,27 +6,43 @@ import { StatusFilterBar } from './components/StatusFilterBar';
 import { ProjectFormModal } from './components/ProjectFormModal';
 import { Button } from '@/shared/components/ui/Button';
 import { Plus, Search, FolderKanban } from 'lucide-react';
-import { Status } from '@/core/types/common';
+import { Project, ProjectStatus } from '../types';
 import { useDebounce } from '@/core/hooks/useDebounce';
 
 export const ProjectsPage: React.FC = () => {
-  const [status, setStatus] = useState<Status | 'ALL'>('ALL');
+  const [status, setStatus] = useState<ProjectStatus | 'ALL'>('ALL');
   const [search, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [projectToEdit, setProjectToEdit] = useState<Project | null>(null);
 
   const debouncedSearch = useDebounce(search, 300);
 
   const { data: projects = [], isLoading } = useProjects({
-    status: status === 'ALL' ? undefined : status,
+    status: status === 'ALL' ? undefined : (status as any),
     search: debouncedSearch || undefined,
   });
+
+  const handleOpenCreate = () => {
+    setProjectToEdit(null);
+    setIsModalOpen(true);
+  };
+
+  const handleOpenEdit = (project: Project) => {
+    setProjectToEdit(project);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setProjectToEdit(null);
+  };
 
   return (
     <PageContainer
       title="Projects"
       subtitle="Organize, track progress, and manage your team's initiatives."
       actions={
-        <Button onClick={() => setIsModalOpen(true)}>
+        <Button onClick={handleOpenCreate}>
           <Plus className="w-4 h-4 mr-2" />
           New Project
         </Button>
@@ -63,7 +79,7 @@ export const ProjectsPage: React.FC = () => {
             <p className="text-xs text-slate-500 mt-1 max-w-sm">
               Get started by creating your first project to organize tasks and timelines.
             </p>
-            <Button className="mt-4" onClick={() => setIsModalOpen(true)}>
+            <Button className="mt-4" onClick={handleOpenCreate}>
               <Plus className="w-4 h-4 mr-2" />
               Create Project
             </Button>
@@ -71,19 +87,24 @@ export const ProjectsPage: React.FC = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {projects.map((project) => (
-              <ProjectCard key={project.id} project={project} />
+              <ProjectCard
+                key={project.id}
+                project={project}
+                onEdit={handleOpenEdit}
+              />
             ))}
           </div>
         )}
       </div>
 
+      {/* Responsive Create/Edit Project Modal with exact design */}
       <ProjectFormModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={handleCloseModal}
+        projectToEdit={projectToEdit}
       />
     </PageContainer>
   );
 };
 
 export default ProjectsPage;
-

@@ -8,6 +8,14 @@ from app.core.database import get_db, Base, engine
 from sqlalchemy.orm import Session
 import app.models_registry  # Ensures models are imported for create_all
 from app.modules.auth.router import auth_router, users_router
+from app.modules.projects.router import router as projects_router
+from app.shared.error_handlers import register_exception_handlers
+from app.modules.tasks.router import router as tasks_router
+from app.modules.subtasks.router import router as subtasks_router
+from app.modules.documents.router import router as documents_router
+from app.modules.dashboard.router import router as dashboard_router
+
+
 
 
 @asynccontextmanager
@@ -35,11 +43,14 @@ app.add_middleware(
 )
 
 # Include Auth and User Routers (both root and /api/v1 prefixes)
+register_exception_handlers(app)
 app.include_router(auth_router)
 app.include_router(users_router)
-app.include_router(auth_router, prefix=settings.API_V1_PREFIX)
-app.include_router(users_router, prefix=settings.API_V1_PREFIX)
-
+app.include_router(projects_router)
+app.include_router(tasks_router)
+app.include_router(subtasks_router)
+app.include_router(documents_router)
+app.include_router(dashboard_router)
 
 @app.get("/")
 def root():

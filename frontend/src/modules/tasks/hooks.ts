@@ -1,12 +1,24 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { tasksApi } from './api';
-import { TaskCreate, TaskUpdate } from './types';
-import { Status } from '@/core/types/common';
+import { TaskCreate, TaskUpdate, TaskStatus, TaskPriority } from './types';
 
-export const useTasks = (params?: { project_id?: number; status?: Status }) => {
+export const useTasks = (params?: {
+  project_id?: number;
+  status?: TaskStatus;
+  priority?: TaskPriority;
+  search?: string;
+}) => {
   return useQuery({
     queryKey: ['tasks', params],
     queryFn: () => tasksApi.getTasks(params),
+  });
+};
+
+export const useProjectProgress = (projectId: number) => {
+  return useQuery({
+    queryKey: ['project-progress', projectId],
+    queryFn: () => tasksApi.getProjectProgress(projectId),
+    enabled: !!projectId,
   });
 };
 
@@ -22,11 +34,12 @@ export const useCreateTask = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (payload: TaskCreate) => tasksApi.createTask(payload),
+    mutationFn: ({ projectId, payload }: { projectId: number; payload: TaskCreate }) =>
+      tasksApi.createTask(projectId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       queryClient.invalidateQueries({ queryKey: ['projects'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['project-progress'] });
     },
   });
 };
@@ -37,10 +50,11 @@ export const useUpdateTask = () => {
   return useMutation({
     mutationFn: ({ id, payload }: { id: number; payload: TaskUpdate }) =>
       tasksApi.updateTask(id, payload),
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks', variables.id] });
       queryClient.invalidateQueries({ queryKey: ['projects'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['project-progress'] });
     },
   });
 };
@@ -49,12 +63,12 @@ export const useToggleTaskStatus = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, status }: { id: number; status: Status }) =>
+    mutationFn: ({ id, status }: { id: number; status: TaskStatus }) =>
       tasksApi.toggleStatus(id, status),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       queryClient.invalidateQueries({ queryKey: ['projects'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['project-progress'] });
     },
   });
 };
@@ -67,8 +81,7 @@ export const useDeleteTask = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       queryClient.invalidateQueries({ queryKey: ['projects'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['project-progress'] });
     },
   });
 };
-

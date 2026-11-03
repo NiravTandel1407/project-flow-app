@@ -53,6 +53,10 @@ yarn-error.log*
 pnpm-debug.log*
 *.log
 
+# Uploads & User Media
+uploads/
+backend/uploads/
+
 # Editor & OS files
 .vscode/
 .idea/

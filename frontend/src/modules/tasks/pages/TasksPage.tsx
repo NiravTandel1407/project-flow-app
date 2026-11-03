@@ -6,22 +6,34 @@ import { TaskItem } from '../components/TaskItem';
 import { TaskFormModal } from '../components/TaskFormModal';
 import { Button } from '@/shared/components/ui/Button';
 import { Plus, ListFilter, CheckSquare } from 'lucide-react';
-import { Status } from '@/core/types/common';
-import { Task } from '../types';
+import { Task, TaskStatus } from '../types';
 
 export const TasksPage: React.FC = () => {
-  const [filterStatus, setFilterStatus] = useState<Status | 'ALL'>('ALL');
+  const [filterStatus, setFilterStatus] = useState<TaskStatus | 'ALL'>('ALL');
   const [selectedProjectId, setSelectedProjectId] = useState<number | 'ALL'>('ALL');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [taskToEdit, setTaskToEdit] = useState<Task | null>(null);
 
   const { data: projects = [] } = useProjects();
+
+  const currentProjectId =
+    selectedProjectId !== 'ALL'
+      ? selectedProjectId
+      : projects.length > 0
+      ? projects[0].id
+      : 0;
+
+  const currentProjectName =
+    selectedProjectId !== 'ALL'
+      ? projects.find((p) => p.id === selectedProjectId)?.name || 'Project'
+      : projects.length > 0
+      ? projects[0].name
+      : 'Project';
+
   const { data: tasks = [], isLoading } = useTasks({
-    project_id: selectedProjectId === 'ALL' ? undefined : selectedProjectId,
+    project_id: currentProjectId || undefined,
     status: filterStatus === 'ALL' ? undefined : filterStatus,
   });
-
-  const defaultProjectId = selectedProjectId !== 'ALL' ? selectedProjectId : projects[0]?.id || 1;
 
   const handleCreate = () => {
     setTaskToEdit(null);
@@ -46,37 +58,22 @@ export const TasksPage: React.FC = () => {
     >
       <div className="space-y-6">
         {/* Filters */}
-        <div className="flex flex-wrap items-center gap-4 bg-white p-4 rounded-xl border border-slate-200">
+        <div className="flex flex-wrap items-center gap-4 bg-white p-4 rounded-xl border border-[#E4E6EF] shadow-sm">
           <div className="flex items-center gap-2">
-            <ListFilter className="w-4 h-4 text-slate-400" />
-            <span className="text-xs font-semibold uppercase text-slate-500">Filters:</span>
+            <ListFilter className="w-4 h-4 text-[#5B6275]" />
+            <span className="text-xs font-semibold uppercase text-[#5B6275]">Filters:</span>
           </div>
 
           <div className="flex items-center gap-2">
-            <label className="text-xs text-slate-600 font-medium">Status:</label>
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value as Status | 'ALL')}
-              className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-            >
-              <option value="ALL">All Statuses</option>
-              <option value="TODO">To Do</option>
-              <option value="IN_PROGRESS">In Progress</option>
-              <option value="COMPLETED">Completed</option>
-              <option value="BLOCKED">Blocked</option>
-            </select>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <label className="text-xs text-slate-600 font-medium">Project:</label>
+            <label className="text-xs text-[#14162B] font-medium">Project:</label>
             <select
               value={selectedProjectId}
               onChange={(e) =>
                 setSelectedProjectId(e.target.value === 'ALL' ? 'ALL' : Number(e.target.value))
               }
-              className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              className="rounded-lg border border-[#CDD1E0] bg-white px-3 py-1.5 text-xs text-[#14162B] focus:outline-none focus:border-[#3B5BFF]"
             >
-              <option value="ALL">All Projects</option>
+              {projects.length > 1 && <option value="ALL">All Projects (Default First)</option>}
               {projects.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.name}
@@ -84,33 +81,47 @@ export const TasksPage: React.FC = () => {
               ))}
             </select>
           </div>
+
+          <div className="flex items-center gap-2">
+            <label className="text-xs text-[#14162B] font-medium">Status:</label>
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value as TaskStatus | 'ALL')}
+              className="rounded-lg border border-[#CDD1E0] bg-white px-3 py-1.5 text-xs text-[#14162B] focus:outline-none focus:border-[#3B5BFF]"
+            >
+              <option value="ALL">All Statuses</option>
+              <option value="todo">To do</option>
+              <option value="in_progress">In progress</option>
+              <option value="done">Done</option>
+            </select>
+          </div>
         </div>
 
         {/* Task List */}
         {isLoading ? (
           <div className="flex justify-center py-20">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-indigo-600 border-t-transparent" />
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#3B5BFF] border-t-transparent" />
           </div>
         ) : tasks.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white p-16 text-center">
-            <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 mb-3">
+          <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-[#E4E6EF] bg-white p-16 text-center">
+            <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center text-[#5B6275] mb-3">
               <CheckSquare className="w-6 h-6" />
             </div>
-            <h3 className="text-base font-semibold text-slate-800">No tasks found</h3>
-            <p className="text-xs text-slate-500 mt-1 max-w-sm">
+            <h3 className="text-base font-semibold text-[#14162B]">No tasks found</h3>
+            <p className="text-xs text-[#5B6275] mt-1 max-w-sm">
               {projects.length === 0
                 ? 'Create a project first before creating tasks.'
-                : 'Add a new task to get things done.'}
+                : 'Get started by creating a new task for this project.'}
             </p>
             {projects.length > 0 && (
               <Button className="mt-4" onClick={handleCreate}>
                 <Plus className="w-4 h-4 mr-2" />
-                Add Task
+                Create Task
               </Button>
             )}
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="flex flex-col gap-3">
             {tasks.map((task) => (
               <TaskItem key={task.id} task={task} onEdit={handleEdit} />
             ))}
@@ -120,8 +131,12 @@ export const TasksPage: React.FC = () => {
 
       <TaskFormModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        projectId={defaultProjectId}
+        onClose={() => {
+          setIsModalOpen(false);
+          setTaskToEdit(null);
+        }}
+        projectId={currentProjectId}
+        projectName={currentProjectName}
         taskToEdit={taskToEdit}
       />
     </PageContainer>
@@ -129,4 +144,3 @@ export const TasksPage: React.FC = () => {
 };
 
 export default TasksPage;
-

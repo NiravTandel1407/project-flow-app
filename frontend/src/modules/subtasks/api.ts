@@ -3,24 +3,29 @@ import { Subtask, SubtaskCreate, SubtaskUpdate } from './types';
 
 export const subtasksApi = {
   getSubtasksByTask: async (taskId: number): Promise<Subtask[]> => {
-    const response = await apiClient.get<Subtask[]>(`/subtasks`, {
-      params: { task_id: taskId },
+    const response = await apiClient.get<Subtask[]>(`/tasks/${taskId}/subtasks`);
+    return response.data;
+  },
+
+  createSubtask: async (taskId: number, payload: SubtaskCreate): Promise<Subtask> => {
+    const response = await apiClient.post<Subtask>(`/tasks/${taskId}/subtasks`, {
+      title: payload.title,
     });
     return response.data;
   },
 
-  createSubtask: async (payload: SubtaskCreate): Promise<Subtask> => {
-    const response = await apiClient.post<Subtask>('/subtasks', payload);
-    return response.data;
-  },
-
   updateSubtask: async (id: number, payload: SubtaskUpdate): Promise<Subtask> => {
-    const response = await apiClient.patch<Subtask>(`/subtasks/${id}`, payload);
+    const is_done = payload.is_done !== undefined ? payload.is_done : payload.is_completed;
+    const body: { title?: string; is_done?: boolean } = {};
+    if (payload.title !== undefined) body.title = payload.title;
+    if (is_done !== undefined) body.is_done = is_done;
+
+    const response = await apiClient.patch<Subtask>(`/subtasks/${id}`, body);
     return response.data;
   },
 
-  toggleSubtask: async (id: number, is_completed: boolean): Promise<Subtask> => {
-    const response = await apiClient.patch<Subtask>(`/subtasks/${id}`, { is_completed });
+  toggleSubtask: async (id: number, is_done: boolean): Promise<Subtask> => {
+    const response = await apiClient.patch<Subtask>(`/subtasks/${id}`, { is_done });
     return response.data;
   },
 
@@ -28,4 +33,3 @@ export const subtasksApi = {
     await apiClient.delete(`/subtasks/${id}`);
   },
 };
-

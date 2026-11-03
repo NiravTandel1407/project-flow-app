@@ -1,3 +1,4 @@
+from sqlalchemy.orm import Mapped, relationship
 from sqlalchemy import Boolean, Column, DateTime, Integer, String, func
 
 from app.core.database import Base
@@ -13,3 +14,8 @@ class User(Base):
     is_active = Column(Boolean, default=True, nullable=False)
     is_admin = Column(Boolean, default=False, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+        
+    projects: Mapped[list["Project"]] = relationship(
+        back_populates="owner", cascade="all, delete-orphan"
+    )
