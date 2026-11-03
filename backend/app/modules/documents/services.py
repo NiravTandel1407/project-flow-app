@@ -115,3 +115,4 @@ def delete_document(db: Session, user_id: int, project_id: int, document_id: int
 
     db.delete(doc)
     db.commit()
+

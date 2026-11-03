@@ -6,7 +6,7 @@ from sqlalchemy import and_, case, func, select
 from sqlalchemy.orm import Session
 
 from app.modules.projects import services as project_services
-from app.modules.projects.models import Priority, Project
+from app.modules.projects.models import Priority, Project, ProjectStatus
 from app.modules.subtasks.models import Subtask
 from app.modules.tasks.exceptions import TaskNotFoundError
 from app.modules.tasks.models import Task, TaskStatus
@@ -40,6 +40,37 @@ def _attach(task: Task, total: int, done: int) -> Task:
     return task
 
 
+def _check_project_completion(db: Session, project_id: int):
+    """Auto status: when all tasks are done, project switches to Completed.
+    If a task is moved back to in_progress or todo, switches back to in_progress.
+    """
+    project = db.scalar(select(Project).where(Project.id == project_id))
+    if not project:
+        return
+
+    total_tasks = (
+        db.scalar(select(func.count(Task.id)).where(Task.project_id == project_id))
+        or 0
+    )
+    if total_tasks == 0:
+        return
+
+    pending_tasks = (
+        db.scalar(
+            select(func.count(Task.id)).where(
+                Task.project_id == project_id,
+                Task.status != TaskStatus.done,
+            )
+        )
+        or 0
+    )
+
+    if pending_tasks == 0 and project.status != ProjectStatus.completed:
+        project.status = ProjectStatus.completed
+    elif pending_tasks > 0 and project.status == ProjectStatus.completed:
+        project.status = ProjectStatus.in_progress
+
+
 def get_task(db: Session, user_id: int, task_id: int) -> Task:
     """Fetch a task only if its PROJECT belongs to this user (task -> project -> user)."""
     stmt = (
@@ -71,6 +102,7 @@ def create_task(db: Session, user_id: int, project_id: int, data: TaskCreate) ->
     if task.status == TaskStatus.done:
         task.completed_at = _now()
     db.add(task)
+    _check_project_completion(db, project_id)
     db.commit()
     db.refresh(task)
     return _attach(task, 0, 0)
@@ -121,13 +153,17 @@ def update_task(db: Session, user_id: int, task_id: int, data: TaskUpdate) -> Ta
 
     for field, value in changes.items():
         setattr(task, field, value)
+
+    _check_project_completion(db, task.project_id)
     db.commit()
     return get_task(db, user_id, task_id)  # re-read so counts are fresh
 
 
 def delete_task(db: Session, user_id: int, task_id: int) -> None:
     task = get_task(db, user_id, task_id)
+    project_id = task.project_id
     db.delete(task)  # subtasks are removed by the database (ondelete CASCADE)
+    _check_project_completion(db, project_id)
     db.commit()
 
 

@@ -12,3 +12,4 @@ class DocumentOut(BaseModel):
     file_size: int
     content_type: str | None = None
     created_at: datetime
+

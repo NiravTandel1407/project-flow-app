@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Project } from '../../types';
 import { ProgressBar } from '@/shared/components/ui/ProgressBar';
 import { Badge } from '@/shared/components/ui/Badge';
-import { Calendar, CheckCircle2, ChevronRight, Flag, Edit3 } from 'lucide-react';
+import { Calendar, CheckCircle2, ChevronRight, Flag, Edit3, AlertCircle } from 'lucide-react';
 
 interface ProjectCardProps {
   project: Project;
@@ -47,10 +47,19 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, onEdit }) => 
 
   const progress = project.progress ?? 0;
 
+  const isProjectOverdue = Boolean(
+    project.due_date &&
+      project.status !== 'completed' &&
+      project.status !== 'COMPLETED' &&
+      new Date(project.due_date).setHours(0, 0, 0, 0) < new Date().setHours(0, 0, 0, 0)
+  );
+
   return (
     <div
       onClick={() => navigate(`/projects/${project.id}`)}
-      className="group flex flex-col justify-between rounded-2xl border border-[#E4E7EC] bg-white p-6 shadow-sm hover:border-[#9DB0FF] hover:shadow-md transition-all cursor-pointer"
+      className={`group flex flex-col justify-between rounded-2xl border bg-white p-6 shadow-sm hover:border-[#9DB0FF] hover:shadow-md transition-all cursor-pointer ${
+        isProjectOverdue ? 'border-red-200 hover:border-red-400' : 'border-[#E4E7EC]'
+      }`}
     >
       <div>
         <div className="flex items-start justify-between gap-2 mb-3">
@@ -67,6 +76,13 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, onEdit }) => 
               >
                 <Flag className="w-2.5 h-2.5" />
                 <span className="capitalize">{project.priority.toLowerCase()}</span>
+              </span>
+            )}
+
+            {isProjectOverdue && (
+              <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-200">
+                <AlertCircle className="w-2.5 h-2.5" />
+                Overdue
               </span>
             )}
           </div>
@@ -114,9 +130,17 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, onEdit }) => 
           </div>
 
           {project.due_date && (
-            <div className="flex items-center gap-1.5 text-[#667085]" title="Due date">
-              <Calendar className="w-3.5 h-3.5" />
-              <span>{new Date(project.due_date).toLocaleDateString()}</span>
+            <div
+              className={`flex items-center gap-1.5 ${
+                isProjectOverdue ? 'text-[#B42318] font-semibold' : 'text-[#667085]'
+              }`}
+              title={isProjectOverdue ? 'Project is overdue' : 'Due date'}
+            >
+              <Calendar className={`w-3.5 h-3.5 ${isProjectOverdue ? 'text-[#B42318]' : ''}`} />
+              <span>
+                {isProjectOverdue ? 'Due ' : ''}
+                {new Date(project.due_date).toLocaleDateString()}
+              </span>
             </div>
           )}
         </div>

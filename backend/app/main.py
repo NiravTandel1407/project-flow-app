@@ -13,6 +13,7 @@ from app.shared.error_handlers import register_exception_handlers
 from app.modules.tasks.router import router as tasks_router
 from app.modules.subtasks.router import router as subtasks_router
 from app.modules.documents.router import router as documents_router
+from app.modules.dashboard.router import router as dashboard_router
 
 
 
@@ -49,6 +50,7 @@ app.include_router(projects_router)
 app.include_router(tasks_router)
 app.include_router(subtasks_router)
 app.include_router(documents_router)
+app.include_router(dashboard_router)
 
 @app.get("/")
 def root():

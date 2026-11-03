@@ -1,50 +1,46 @@
 import React from 'react';
-import { PieChart } from 'lucide-react';
+import { FolderKanban } from 'lucide-react';
+import { ProjectsByStatus } from '../../types';
 
 interface StatusBreakdownProps {
-  breakdown: {
-    TODO: number;
-    IN_PROGRESS: number;
-    COMPLETED: number;
-    BLOCKED: number;
-  };
+  projectsByStatus: ProjectsByStatus;
 }
 
-export const StatusBreakdown: React.FC<StatusBreakdownProps> = ({ breakdown }) => {
-  const total =
-    (breakdown.TODO || 0) +
-    (breakdown.IN_PROGRESS || 0) +
-    (breakdown.COMPLETED || 0) +
-    (breakdown.BLOCKED || 0);
+export const StatusBreakdown: React.FC<StatusBreakdownProps> = ({
+  projectsByStatus,
+}) => {
+  const total = projectsByStatus.total || 0;
 
   const items = [
     {
-      label: 'To Do',
-      count: breakdown.TODO || 0,
+      label: 'Not Started',
+      count: projectsByStatus.not_started || 0,
       color: 'bg-slate-400',
     },
     {
       label: 'In Progress',
-      count: breakdown.IN_PROGRESS || 0,
+      count: projectsByStatus.in_progress || 0,
       color: 'bg-[#3B5BFF]',
     },
     {
-      label: 'Completed',
-      count: breakdown.COMPLETED || 0,
-      color: 'bg-[#2EE6A6]',
+      label: 'On Hold',
+      count: projectsByStatus.on_hold || 0,
+      color: 'bg-amber-500',
     },
     {
-      label: 'Blocked',
-      count: breakdown.BLOCKED || 0,
-      color: 'bg-rose-500',
+      label: 'Completed',
+      count: projectsByStatus.completed || 0,
+      color: 'bg-emerald-500',
     },
   ];
 
   return (
     <div className="bg-white rounded-2xl border border-[#E4E7EC] p-6 shadow-sm">
       <div className="flex items-center gap-2 mb-4">
-        <PieChart className="w-5 h-5 text-[#3B5BFF]" />
-        <h3 className="font-bold text-[#101828] text-base">Task Status Breakdown</h3>
+        <FolderKanban className="w-5 h-5 text-[#3B5BFF]" />
+        <h3 className="font-bold text-[#101828] text-base">
+          Projects by Status
+        </h3>
       </div>
 
       <div className="space-y-4">
@@ -79,11 +75,17 @@ export const StatusBreakdown: React.FC<StatusBreakdownProps> = ({ breakdown }) =
               >
                 <div className="flex items-center gap-2">
                   <span className={`w-2.5 h-2.5 rounded-full ${item.color}`} />
-                  <span className="text-xs font-semibold text-[#344054]">{item.label}</span>
+                  <span className="text-xs font-semibold text-[#344054]">
+                    {item.label}
+                  </span>
                 </div>
                 <div className="text-right">
-                  <span className="text-xs font-bold text-[#101828]">{item.count}</span>
-                  <span className="text-[10px] text-[#667085] ml-1">({pct}%)</span>
+                  <span className="text-xs font-bold text-[#101828]">
+                    {item.count}
+                  </span>
+                  <span className="text-[10px] text-[#667085] ml-1">
+                    ({pct}%)
+                  </span>
                 </div>
               </div>
             );

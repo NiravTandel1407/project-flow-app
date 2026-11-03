@@ -7,3 +7,4 @@ export interface ProjectDocument {
   content_type?: string | null;
   created_at: string;
 }
+

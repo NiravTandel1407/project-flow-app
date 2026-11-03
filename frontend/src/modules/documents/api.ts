@@ -56,3 +56,4 @@ export const documentsApi = {
     await apiClient.delete(`/projects/${projectId}/documents/${documentId}`);
   },
 };
+

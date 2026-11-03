@@ -67,3 +67,4 @@ def delete_document(
     user: User = Depends(get_current_user),
 ):
     services.delete_document(db, user.id, project_id, document_id)
+
